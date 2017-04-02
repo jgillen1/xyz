@@ -15,7 +15,7 @@ extern double size;
 //  benchmarking program
 //
 
-#define MAX 100
+#define MAX 10
 
 __global__ void clear_gpu(int *numInBlock, int row) {
         int tid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -312,12 +312,12 @@ int main(int argc, char **argv) {
         cudaFree(numInBlock);
 
         if (fsum)
-fprintf(fsum,"%d %lf \n",n,simulation_time);
+		fprintf(fsum,"%d %lf \n",n,simulation_time);
 
-  if (fsum)
-fclose( fsum );
-        if (fsave)
-                fclose(fsave);
+ 	 if (fsum)
+		fclose( fsum );
+ 	 if (fsave)
+       	 	fclose(fsave);
 
-        return 0;
+       	 return 0;
 }
