@@ -297,9 +297,10 @@ int main(int argc, char **argv) {
                         save(fsave, n, particles);
                 }*/
         }
-        cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
-        if(fsave)
-          save(fsave, n, particles);
+	if(fsave) {
+        	cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
+               	save(fsave, n, particles);
+	}
         cudaThreadSynchronize();
         simulation_time = read_timer() - simulation_time;
 
