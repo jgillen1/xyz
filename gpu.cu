@@ -21,7 +21,7 @@ __global__ void clear_gpu(int *numInBlock, int row) {
         int tid = threadIdx.x + blockIdx.x * blockDim.x;
         if (tid >= row*row) return;
 
-                numInBlock[tid] = 0;
+        numInBlock[tid] = 0;
 
 
 }
@@ -31,15 +31,15 @@ __global__ void bin_gpu(particle_t *p,particle_t **bins,int n, int row, int *num
 
         int tid = threadIdx.x + blockIdx.x * blockDim.x;
         if (tid >= n) return;
-//printf("Hello from block %d, thread %d\n", blockIdx.x, threadIdx.x);
+	//printf("Hello from block %d, thread %d\n", blockIdx.x, threadIdx.x);
 
-                int idx = floor(p[tid].x/0.01) + row *floor(p[tid].y/0.01);
-								//printf("asd");
+        int idx = floor(p[tid].x/0.01) + row *floor(p[tid].y/0.01);
+	//printf("asd");
 
-                int num = atomicAdd(&numInBlock[idx],1);
-                bins[idx*MAX + num] = p + tid;
+        int num = atomicAdd(&numInBlock[idx],1);
+        bins[idx*MAX + num] = p + tid;
 
-							//	printf("Hello from block %d, thread %d  Number of particles in bin %d is %d\n", blockIdx.x, threadIdx.x,idx,numInBlock[idx]);
+	//printf("Hello from block %d, thread %d  Number of particles in bin %d is %d\n", blockIdx.x, threadIdx.x,idx,numInBlock[idx]);
 
 
 	//printf("Number of particels in bin 10\n");
@@ -129,15 +129,14 @@ if((binx + biny) >= row * (row-1)) hj = 0;
 
 
 for (int ii = li; ii <= hi; ii++) {
-								for (int jj = lj; jj <= hj; jj++) {
-											int nbin = binx + biny + ii + jj*row;
-																for (int kk = 0; kk < numInBlock[nbin]; kk++ ) {
-                                    //printf("here\n" );
-																				apply_force_gpu(p, *(bins[n*nbin+kk]));
-
-																			}
-																		}
-																	}
+	for (int jj = lj; jj <= hj; jj++) {
+		int nbin = binx + biny + ii + jj*row;
+		for (int kk = 0; kk < numInBlock[nbin]; kk++ ) {
+                 //printf("here\n" );
+		apply_force_gpu(p, *(bins[n*nbin+kk]));
+		}
+	}
+}
 
 
 particles[tid].ax = p.ax;
@@ -147,23 +146,19 @@ particles[tid].ay = p.ay;
 
 
 for (int ii = -1; ii < 2; ii++) {
-				int idx = binx + ii;
-				if (idx >=0 && idx < row) {
-								for (int jj = -1; jj < 2; jj++) {
-												int idy = biny + jj;
-												if(idy >=0 && idy < row ) {
-																for (int kk = 0; kk < numInBlock[idx + idy*row]; kk++ ) {
-                                    //printf("here\n" );
-																				apply_force_gpu(particles[tid], *(bins[MAX*(idx + idy*row)+kk]));
-
-																			}
-																		}
-																	}
-																}
-															}
-
-
-
+	int idx = binx + ii;
+	if (idx >=0 && idx < row) {
+		for (int jj = -1; jj < 2; jj++) {
+			int idy = biny + jj;
+			if(idy >=0 && idy < row ) {
+				for (int kk = 0; kk < numInBlock[idx + idy*row]; kk++ ) {
+                                   //printf("here\n" );
+				apply_force_gpu(particles[tid], *(bins[MAX*(idx + idy*row)+kk]));
+				}
+			}
+		}
+	}
+}
 }
 
 __global__ void move_gpu(particle_t * particles, int n, double size) {
