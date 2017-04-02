@@ -37,7 +37,7 @@ __global__ void bin_gpu(particle_t *p,particle_t **bins,int n, int row, int *num
 								//printf("asd");
 
                 int num = atomicAdd(&numInBlock[idx],1);
-                bins[idx*n + num] = p + tid;
+                bins[idx*MAX + num] = p + tid;
 
 							//	printf("Hello from block %d, thread %d  Number of particles in bin %d is %d\n", blockIdx.x, threadIdx.x,idx,numInBlock[idx]);
 
@@ -154,7 +154,7 @@ for (int ii = -1; ii < 2; ii++) {
 												if(idy >=0 && idy < row ) {
 																for (int kk = 0; kk < numInBlock[idx + idy*row]; kk++ ) {
                                     //printf("here\n" );
-																				apply_force_gpu(particles[tid], *(bins[n*(idx + idy*row)+kk]));
+																				apply_force_gpu(particles[tid], *(bins[MAX*(idx + idy*row)+kk]));
 
 																			}
 																		}
@@ -233,7 +233,7 @@ int main(int argc, char **argv) {
         int row = ceil(sz/0.01);
 
         particle_t ** bins;
-        cudaMalloc((void **)&bins, row*row*n *sizeof(particle_t*));
+        cudaMalloc((void **)&bins, row*row*MAX *sizeof(particle_t*));
 
         //for (int i = 0; i < row*row; i++) {
         //      cudaMalloc((void **)&bins[i], n*sizeof(particle_t*));
@@ -260,7 +260,7 @@ int main(int argc, char **argv) {
         double simulation_time = read_timer();
 
 
-        vector<particle_t*> *binTest = new vector<particle_t*>[row*row];
+        //vector<particle_t*> *binTest = new vector<particle_t*>[row*row];
 
 
 
@@ -283,12 +283,15 @@ int main(int argc, char **argv) {
               //  clear_gpu<<< blks, NUM_THREADS >>> (numInBlock,row);
 							cudaMemset(numInBlock,0,row*row*sizeof(int));
                 bin_gpu <<< blks, NUM_THREADS >>> (d_particles, bins, n, row, numInBlock,bin_size);
+
                 compute_forces_gpu << < blks, NUM_THREADS >> > (d_particles, n, bins, numInBlock, row);
+
 
                 //
                 //  move particles
                 //
                 move_gpu << < blks, NUM_THREADS >> > (d_particles, n, size);
+              
 
                 //
                 //  save if necessary
@@ -300,7 +303,8 @@ int main(int argc, char **argv) {
                 }*/
         }
         cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
-        save(fsave, n, particles);
+        if(fsave)
+          save(fsave, n, particles);
         cudaThreadSynchronize();
         simulation_time = read_timer() - simulation_time;
 
@@ -316,7 +320,7 @@ int main(int argc, char **argv) {
 fprintf(fsum,"%d %lf \n",n,simulation_time);
 
   if (fsum)
-fclose( fsum ); 
+fclose( fsum );
         if (fsave)
                 fclose(fsave);
 
